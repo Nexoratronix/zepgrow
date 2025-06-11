@@ -16,7 +16,7 @@ import {
 import { settingsData } from "@/redux/reuducer/settingSlice";
 import LocationWithRadius from "../Layout/LocationWithRadius";
 
-const LocationModal = ({ IsLocationModalOpen, OnHide }) => {
+const LocationModal = ({ IsLocationModalOpen, OnHide,onLocationSelected }) => {
   const dispatch = useDispatch();
   const cityData = useSelector((state) => state?.Location?.cityData);
   const lat = cityData?.lat;
@@ -201,17 +201,18 @@ const LocationModal = ({ IsLocationModalOpen, OnHide }) => {
     setSelectedCity({ city: value });
     setIsValidLocation(false);
   };
-  const handleUpdateLocation = (e) => {
+ const handleUpdateLocation = (e) => {
     e.preventDefault();
-    if (selectedCity) {
-      if (isValidLocation || (cityData && cityData.lat && cityData.long)) {
-        dispatch(setKilometerRange(KmRange));
-        saveCity(selectedCity);
-        router.push("/");
-        OnHide();
+    if (selectedCity && (isValidLocation && (selectedCity.lat && selectedCity.long))) {
+      dispatch(setKilometerRange(KmRange));
+      saveCity(selectedCity);
+       // router.push("/");
+      if (onLocationSelected) {
+        onLocationSelected();
       } else {
-        toast.error("Please Select valid location");
+        router.push("/");
       }
+      OnHide();
     } else {
       toast.error(t("pleaseSelectCity"));
     }

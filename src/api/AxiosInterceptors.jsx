@@ -5,7 +5,9 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const Api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}${process.env.NEXT_PUBLIC_END_POINT}` : 'http://localhost:8000/api/',
+ baseURL: process.env.NEXT_PUBLIC_API_URL 
+    ? `${process.env.NEXT_PUBLIC_API_URL}${process.env.NEXT_PUBLIC_END_POINT}` 
+    : 'http://localhost:3000/api/',
   timeout: 30000, // 30 seconds timeout
   retries: 3, // number of times to retry the request
   retryDelay: 1000, // delay between retries in milliseconds
@@ -51,7 +53,7 @@ Api.interceptors.request.use(function (config) {
   if (langCode) config.headers["Content-Language"] = langCode;
 
   // Force HTTP for local development
-  if (process.env.NODE_ENV === 'development' && config.url.startsWith('https://')) {
+  if (process.env.NODE_ENV === 'development' && config.url.startsWith('http://')) {
     config.url = config.url.replace('https://', 'http://');
   }
 

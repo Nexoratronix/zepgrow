@@ -500,7 +500,7 @@ const RegisterModal = ({ IsRegisterModalOpen, CloseRegisterModal, setIsLoginModa
                     </div>
                 )}
             </Modal>
-            <div id="recaptcha-container"></div>
+            {/* <div id="recaptcha-container"></div> */}
         </>
     );
 };

@@ -18,7 +18,7 @@ import Swal from "sweetalert2";
 import FirebaseData from "@/utils/Firebase";
 import { settingsData } from "@/redux/reuducer/settingSlice";
 import { getLanguageApi, getLimitsApi } from "@/utils/api";
-import {
+import {                                                                 
   CurrentLanguageData,
   setCurrentLanguage,
 } from "@/redux/reuducer/languageSlice";

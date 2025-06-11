@@ -41,7 +41,7 @@ import UpdateMyItemStatus from "./UpdateMyItemStatus";
 import LocationCardInProdDet from "../SingleProductDetail/LocationCardInProdDet";
 import { useRouter } from "next/navigation";
 import withRedirect from "@/components/Layout/withRedirect";
-import { userSignUpData } from "@/redux/reuducer/userSignUpSlice";
+import { userSignUpData } from "@/redux/reuducer/userSlice";
 
 const SingleListing = ({ slug }) => {
   const router = useRouter();

@@ -71,7 +71,7 @@ const LoginModal = ({
   // If the number starts with the country code, remove it
   const formattedNumber = startsWithCountryCode
     ? number.substring(countryCodeDigitsOnly.length)
-    : number;
+    : number; 
 
   useEffect(() => {
     if (isDemoMode && IsLoginModalOpen) {

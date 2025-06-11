@@ -1,4 +1,9 @@
 'use client'
+import { useSearchParams } from 'next/navigation';
+// import { useEffect } from 'react';
+// import { useSelector } from 'react-redux';
+import { getKilometerRange } from '@/redux/reuducer/locationSlice';
+
 import BreadcrumbComponent from "@/components/Breadcrumb/BreadcrumbComponent"
 import ProdcutHorizontalCard from "@/components/Cards/ProdcutHorizontalCard"
 import ProductCard from "@/components/Cards/ProductCard"
@@ -26,6 +31,9 @@ import withRedirect from "@/components/Layout/withRedirect"
 
 
 const SingleCategory = ({ slug }) => {
+
+    const searchParams = useSearchParams();
+    const appliedRange = useSelector(getKilometerRange);
 
     const { lat, long } = useSelector(getCityData)
     const dispatch = useDispatch()
@@ -132,6 +140,16 @@ const SingleCategory = ({ slug }) => {
             console.log(error)
         }
     }
+
+// by nexora 
+useEffect(() => {
+    const withRange = searchParams.get('withRange') === 'true';
+    if (withRange) {
+      setIsShowKmRange(true);
+      setKmRange(appliedRange);
+    }
+  }, [searchParams, appliedRange]);
+
 
     useEffect(() => {
         if (categoryIds) {
