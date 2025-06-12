@@ -657,7 +657,7 @@ export const generateSlug = (text) => {
 };
 
 export const isEmptyObject = (obj) => {
-  return Object.keys(obj).length === 0;
+  // return Object.keys(obj).length === 0;
 };
 
 
