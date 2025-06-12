@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { Providers } from "@/redux/store/providers";
 import "../../public/css/style.css";
 import "bootstrap/dist/css/bootstrap.css";

@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = "force-dynamic";
 import { isLogin, t } from "@/utils"
 import { getVerificationFiledsApi, getVerificationStatusApi, sendVerificationReqApi } from "@/utils/api"
 import { useEffect, useState } from "react"
