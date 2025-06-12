@@ -926,8 +926,7 @@
 
 
 
-// without GOOGLE AUTHENTICTIION 
-
+// without GOOGLE AUTHENTICTIION  running 
 'use client'
 import { Modal } from "antd";
 import Link from "next/link";
@@ -1001,13 +1000,8 @@ const LoginModal = ({
     await recaptchaClear();
   };
 
-  // Remove any non-digit characters from the country code
   const countryCodeDigitsOnly = countryCode.replace(/\D/g, "");
-
-  // Check if the entered number starts with the selected country code
   const startsWithCountryCode = number.startsWith(countryCodeDigitsOnly);
-
-  // If the number starts with the country code, remove it
   const formattedNumber = startsWithCountryCode
     ? number.substring(countryCodeDigitsOnly.length)
     : number;
@@ -1055,11 +1049,7 @@ const LoginModal = ({
 
   const signin = async (email, password) => {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       if (userCredential.length === 0) {
         toast.error(t("userNotFound"));
       } else {
@@ -1072,12 +1062,9 @@ const LoginModal = ({
   };
 
   const handleInputChange = (value, data) => {
-    const emailRegexPattern =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegexPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const containsOnlyDigits = /^\d+$/.test(value);
-
     setInputValue(value);
-
     if (emailRegexPattern.test(value)) {
       setInputType("email");
       setEmail(value);
@@ -1120,7 +1107,6 @@ const LoginModal = ({
             fcm_id: fetchFCM ? fetchFCM : "",
             type: "email",
           });
-
           const data = response.data;
           loadUpdateData(data);
           if (data.error === true) {
@@ -1155,13 +1141,9 @@ const LoginModal = ({
       }
       try {
         recaptchaContainer.innerHTML = "";
-        window.recaptchaVerifier = new RecaptchaVerifier(
-          auth,
-          "recaptcha-container",
-          {
-            size: "invisible",
-          }
-        );
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+        });
         return window.recaptchaVerifier;
       } catch (error) {
         console.error("Error initializing RecaptchaVerifier:", error.message);
@@ -1190,40 +1172,67 @@ const LoginModal = ({
   const sendOTP = async () => {
     setShowLoader(true);
     const PhoneNumber = `${countryCode}${formattedNumber}`;
-    if (otp_service_provider === 'twilio') {
-      try {
-        const response = await getOtpApi.getOtp({ number: PhoneNumber });
-        if (response?.data?.error === false) {
-          toast.success(t("otpSentSuccess"));
-          setResendTimer(60);
+
+    // Step 1: Check if the phone number exists using getOtpApi
+    let numberExists = false;
+    try {
+      const response = await getOtpApi.getOtp({ number: PhoneNumber });
+      if (response?.data?.error === false) {
+        numberExists = true; // Number exists, proceed with sending OTP
+      } else {
+        // If the number is not found, redirect to registration
+        if (response?.data?.message?.toLowerCase().includes("not found")) {
+          toast.error(t("numberNotFoundPleaseRegister"));
+          setIsRegisterModalOpen(true);
+          setIsLoginModalOpen(false);
+          setShowLoader(false);
+          return;
         } else {
           toast.error(t("failedToSendOtp"));
+          setShowLoader(false);
+          return;
         }
-      } catch (error) {
-        console.error('error', error);
-      } finally {
-        setShowLoader(false);
       }
-    } else {
-      try {
-        const appVerifier = generateRecaptcha();
-        const confirmation = await signInWithPhoneNumber(
-          auth,
-          PhoneNumber,
-          appVerifier
-        );
-        setConfirmationResult(confirmation);
-        toast.success(t("otpSentSuccess"));
-        setResendTimer(60);
-        if (isDemoMode) {
-          setOtp("123456");
+    } catch (error) {
+      console.error('Error checking number existence:', error);
+      toast.error(t("failedToCheckNumber"));
+      setShowLoader(false);
+      return;
+    }
+
+    // Step 2: If the number exists, proceed with sending OTP
+    if (numberExists) {
+      if (otp_service_provider === 'twilio') {
+        try {
+          const response = await getOtpApi.getOtp({ number: PhoneNumber });
+          if (response?.data?.error === false) {
+            toast.success(t("otpSentSuccess"));
+            setResendTimer(60);
+          } else {
+            toast.error(t("failedToSendOtp"));
+          }
+        } catch (error) {
+          console.error('error', error);
+        } finally {
+          setShowLoader(false);
         }
-      } catch (error) {
-        const errorCode = error.code;
-        handleFirebaseAuthError(errorCode);
-      } finally {
-        setShowLoader(false);
-        otpInputRef.current.focus();
+      } else {
+        try {
+          const appVerifier = generateRecaptcha();
+          const confirmation = await signInWithPhoneNumber(auth, PhoneNumber, appVerifier);
+          setConfirmationResult(confirmation);
+          toast.success(t("otpSentSuccess"));
+          setResendTimer(60);
+          if (isDemoMode) {
+            setOtp("123456");
+          }
+        } catch (error) {
+          const errorCode = error.code;
+          handleFirebaseAuthError(errorCode);
+        } finally {
+          setShowLoader(false);
+          otpInputRef.current.focus();
+        }
       }
     }
   };
@@ -1233,38 +1242,64 @@ const LoginModal = ({
     if (resendTimer > 0) return;
     setResendOtpLoader(true);
     const PhoneNumber = `${countryCode}${formattedNumber}`;
-    if (otp_service_provider === 'twilio') {
-      try {
-        const response = await getOtpApi.getOtp({ number: PhoneNumber });
-        if (response?.data?.error === false) {
-          toast.success(t("otpSentSuccess"));
-          setResendTimer(60);
+
+    // Step 1: Check if the phone number exists
+    let numberExists = false;
+    try {
+      const response = await getOtpApi.getOtp({ number: PhoneNumber });
+      if (response?.data?.error === false) {
+        numberExists = true;
+      } else {
+        if (response?.data?.message?.toLowerCase().includes("not found")) {
+          toast.error(t("numberNotFoundPleaseRegister"));
+          setIsRegisterModalOpen(true);
+          setIsLoginModalOpen(false);
+          setResendOtpLoader(false);
+          return;
         } else {
           toast.error(t("failedToSendOtp"));
+          setResendOtpLoader(false);
+          return;
         }
-      } catch (error) {
-        console.error('error', error);
-      } finally {
-        setResendOtpLoader(false);
-        otpInputRef?.current?.focus();
       }
-    } else {
-      try {
-        const appVerifier = generateRecaptcha();
-        const confirmation = await signInWithPhoneNumber(
-          auth,
-          PhoneNumber,
-          appVerifier
-        );
-        setConfirmationResult(confirmation);
-        toast.success(t("otpSentSuccess"));
-        setResendTimer(60);
-      } catch (error) {
-        const errorCode = error.code;
-        handleFirebaseAuthError(errorCode);
-      } finally {
-        setResendOtpLoader(false);
-        otpInputRef?.current?.focus();
+    } catch (error) {
+      console.error('Error checking number existence:', error);
+      toast.error(t("failedToCheckNumber"));
+      setResendOtpLoader(false);
+      return;
+    }
+
+    // Step 2: If the number exists, proceed with resending OTP
+    if (numberExists) {
+      if (otp_service_provider === 'twilio') {
+        try {
+          const response = await getOtpApi.getOtp({ number: PhoneNumber });
+          if (response?.data?.error === false) {
+            toast.success(t("otpSentSuccess"));
+            setResendTimer(60);
+          } else {
+            toast.error(t("failedToSendOtp"));
+          }
+        } catch (error) {
+          console.error('error', error);
+        } finally {
+          setResendOtpLoader(false);
+          otpInputRef?.current?.focus();
+        }
+      } else {
+        try {
+          const appVerifier = generateRecaptcha();
+          const confirmation = await signInWithPhoneNumber(auth, PhoneNumber, appVerifier);
+          setConfirmationResult(confirmation);
+          toast.success(t("otpSentSuccess"));
+          setResendTimer(60);
+        } catch (error) {
+          const errorCode = error.code;
+          handleFirebaseAuthError(errorCode);
+        } finally {
+          setResendOtpLoader(false);
+          otpInputRef?.current?.focus();
+        }
       }
     }
   };
@@ -1334,14 +1369,7 @@ const LoginModal = ({
     }
   };
 
-  useEffect(() => {}, [
-    inputValue,
-    inputType,
-    IsOTPScreen,
-    email,
-    password,
-    number,
-  ]);
+  useEffect(() => {}, [inputValue, inputType, IsOTPScreen, email, password, number]);
 
   useEffect(() => {
     if (inputValue === "" && email_authentication === 1) {
@@ -1417,239 +1445,185 @@ const LoginModal = ({
               </h1>
               <p className="signin_redirect">
                 {t("newto")} {settings?.company_name}?{" "}
-                <span
-                  className="main_signin_redirect"
-                  onClick={handleCreateAnAccount}
-                >
+                <span className="main_signin_redirect" onClick={handleCreateAnAccount}>
                   {t("createAccount")}
                 </span>
               </p>
             </div>
 
             {(mobile_authentication !== 0 || email_authentication !== 0) && (
-              <form
-                className="auth_form"
-                onSubmit={IsLoginWithEmail ? Signin : handleMobileSubmit}
-              >
+              <form className="auth_form" onSubmit={IsLoginWithEmail ? Signin : handleMobileSubmit}>
                 <div className="auth_in_cont">
-                  {mobile_authentication === 1 &&
-                    email_authentication === 1 && (
-                      <>
-                        {IsLoginWithEmail ? (
-                          <div className="auth_form">
-                            <div className="auth_in_cont">
-                              <label htmlFor="email" className="auth_label">
-                                {t("email")}
-                              </label>
+                  {mobile_authentication === 1 && email_authentication === 1 && (
+                    <>
+                      {IsLoginWithEmail ? (
+                        <div className="auth_form">
+                          <div className="auth_in_cont">
+                            <label htmlFor="email" className="auth_label">
+                              {t("email")}
+                            </label>
+                            <input
+                              type="text"
+                              className="auth_input"
+                              placeholder={t("enterEmail")}
+                              value={inputValue}
+                              onChange={(e) => handleInputChange(e.target.value, {})}
+                              required
+                              ref={emailInputRef}
+                            />
+                          </div>
+
+                          <div className="auth_in_cont">
+                            <label htmlFor="password" className="auth_label">
+                              {t("password")}
+                            </label>
+                            <div className="password_cont">
                               <input
-                                type="text"
+                                type={IsPasswordVisible ? "text" : "password"}
                                 className="auth_input"
-                                placeholder={t("enterEmail")}
-                                value={inputValue}
-                                onChange={(e) =>
-                                  handleInputChange(e.target.value, {})
-                                }
-                                required
-                                ref={emailInputRef}
+                                placeholder={t("enterPassword")}
+                                id="password"
+                                name="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                               />
-                            </div>
-
-                            <div className="auth_in_cont">
-                              <label htmlFor="password" className="auth_label">
-                                {t("password")}
-                              </label>
-                              <div className="password_cont">
-                                <input
-                                  type={IsPasswordVisible ? "text" : "password"}
-                                  className="auth_input"
-                                  placeholder={t("enterPassword")}
-                                  id="password"
-                                  name="password"
-                                  value={password}
-                                  onChange={(e) => setPassword(e.target.value)}
-                                />
-                                <div
-                                  className="pass_eye"
-                                  onClick={togglePasswordVisible}
-                                >
-                                  {IsPasswordVisible ? (
-                                    <FaRegEye size={20} />
-                                  ) : (
-                                    <FaRegEyeSlash size={20} />
-                                  )}
-                                </div>
+                              <div className="pass_eye" onClick={togglePasswordVisible}>
+                                {IsPasswordVisible ? <FaRegEye size={20} /> : <FaRegEyeSlash size={20} />}
                               </div>
-                              <p
-                                className="frgt_pass"
-                                onClick={handleForgotModal}
-                              >
-                                {t("forgtPassword")}
-                              </p>
                             </div>
+                            <p className="frgt_pass" onClick={handleForgotModal}>
+                              {t("forgtPassword")}
+                            </p>
+                          </div>
 
-                            <button
-                              type="submit"
-                              disabled={showLoader}
-                              className="verf_email_add_btn"
-                            >
-                              {showLoader ? (
-                                <div className="loader-container-otp">
-                                  <div className="loader-otp"></div>
-                                </div>
-                              ) : (
-                                t("signIn")
-                              )}
-                            </button>
+                          <button type="submit" disabled={showLoader} className="verf_email_add_btn">
+                            {showLoader ? (
+                              <div className="loader-container-otp">
+                                <div className="loader-otp"></div>
+                              </div>
+                            ) : (
+                              t("signIn")
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="auth_form">
+                          <div className="auth_in_cont">
+                            <label htmlFor="email" className="auth_label">
+                              {t("loginWithMobile")}
+                            </label>
+                            <PhoneInput
+                              country={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
+                              value={number}
+                              onChange={(phone, data) => handleInputChange(phone, data)}
+                              onCountryChange={(code) => setCountryCode(code)}
+                              inputProps={{
+                                name: "phone",
+                                required: true,
+                                autoFocus: true,
+                                ref: numberInputRef,
+                              }}
+                              enableLongNumbers
+                            />
+                          </div>
+
+                          <button type="submit" disabled={showLoader} className="verf_email_add_btn">
+                            {showLoader ? (
+                              <div className="loader-container-otp">
+                                <div className="loader-otp"></div>
+                              </div>
+                            ) : (
+                              t("continue")
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {email_authentication === 1 && mobile_authentication === 0 && (
+                    <div className="auth_form">
+                      <div className="auth_in_cont">
+                        <label htmlFor="email" className="auth_label">
+                          {t("email")}
+                        </label>
+                        <input
+                          type="text"
+                          className="auth_input"
+                          placeholder={t("enterEmail")}
+                          value={inputValue}
+                          onChange={(e) => handleInputChange(e.target.value, {})}
+                          required
+                          ref={emailInputRef}
+                        />
+                      </div>
+
+                      <div className="auth_in_cont">
+                        <label htmlFor="password" className="auth_label">
+                          {t("password")}
+                        </label>
+                        <div className="password_cont">
+                          <input
+                            type={IsPasswordVisible ? "text" : "password"}
+                            className="auth_input"
+                            placeholder={t("enterPassword")}
+                            id="password"
+                            name="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                          <div className="pass_eye" onClick={togglePasswordVisible}>
+                            {IsPasswordVisible ? <FaRegEye size={20} /> : <FaRegEyeSlash size={20} />}
+                          </div>
+                        </div>
+                        <p className="frgt_pass" onClick={handleForgotModal}>
+                          {t("forgtPassword")}
+                        </p>
+                      </div>
+
+                      <button type="submit" disabled={showLoader} className="verf_email_add_btn">
+                        {showLoader ? (
+                          <div className="loader-container-otp">
+                            <div className="loader-otp"></div>
                           </div>
                         ) : (
-                          <div className="auth_form">
-                            <div className="auth_in_cont">
-                              <label htmlFor="email" className="auth_label">
-                                {t("loginWithMobile")}
-                              </label>
-                              <PhoneInput
-                                country={
-                                  process.env.NEXT_PUBLIC_DEFAULT_COUNTRY
-                                }
-                                value={number}
-                                onChange={(phone, data) =>
-                                  handleInputChange(phone, data)
-                                }
-                                onCountryChange={(code) => setCountryCode(code)}
-                                inputProps={{
-                                  name: "phone",
-                                  required: true,
-                                  autoFocus: true,
-                                  ref: numberInputRef,
-                                }}
-                                enableLongNumbers
-                              />
-                            </div>
-
-                            <button
-                              type="submit"
-                              disabled={showLoader}
-                              className="verf_email_add_btn"
-                            >
-                              {showLoader ? (
-                                <div className="loader-container-otp">
-                                  <div className="loader-otp"></div>
-                                </div>
-                              ) : (
-                                t("continue")
-                              )}
-                            </button>
-                          </div>
+                          t("signIn")
                         )}
-                      </>
-                    )}
+                      </button>
+                    </div>
+                  )}
 
-                  {email_authentication === 1 &&
-                    mobile_authentication === 0 && (
-                      <div className="auth_form">
-                        <div className="auth_in_cont">
-                          <label htmlFor="email" className="auth_label">
-                            {t("email")}
-                          </label>
-                          <input
-                            type="text"
-                            className="auth_input"
-                            placeholder={t("enterEmail")}
-                            value={inputValue}
-                            onChange={(e) =>
-                              handleInputChange(e.target.value, {})
-                            }
-                            required
-                            ref={emailInputRef}
-                          />
-                        </div>
-
-                        <div className="auth_in_cont">
-                          <label htmlFor="password" className="auth_label">
-                            {t("password")}
-                          </label>
-                          <div className="password_cont">
-                            <input
-                              type={IsPasswordVisible ? "text" : "password"}
-                              className="auth_input"
-                              placeholder={t("enterPassword")}
-                              id="password"
-                              name="password"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                            />
-                            <div
-                              className="pass_eye"
-                              onClick={togglePasswordVisible}
-                            >
-                              {IsPasswordVisible ? (
-                                <FaRegEye size={20} />
-                              ) : (
-                                <FaRegEyeSlash size={20} />
-                              )}
-                            </div>
+                  {mobile_authentication === 1 && email_authentication === 0 && (
+                    <div className="auth_form">
+                      <div className="auth_in_cont">
+                        <label htmlFor="email" className="auth_label">
+                          {t("loginWithMobile")}
+                        </label>
+                        <PhoneInput
+                          country={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
+                          value={number}
+                          onChange={(phone, data) => handleInputChange(phone, data)}
+                          onCountryChange={(code) => setCountryCode(code)}
+                          inputProps={{
+                            name: "phone",
+                            required: true,
+                            autoFocus: true,
+                            ref: numberInputRef,
+                          }}
+                          enableLongNumbers
+                        />
+                      </div>
+                      <button type="submit" disabled={showLoader} className="verf_email_add_btn">
+                        {showLoader ? (
+                          <div className="loader-container-otp">
+                            <div className="loader-otp"></div>
                           </div>
-                          <p
-                            className="frgt_pass"
-                            onClick={handleForgotModal}
-                          >
-                            {t("forgtPassword")}
-                          </p>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={showLoader}
-                          className="verf_email_add_btn"
-                        >
-                          {showLoader ? (
-                            <div className="loader-container-otp">
-                              <div className="loader-otp"></div>
-                            </div>
-                          ) : (
-                            t("signIn")
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  {mobile_authentication === 1 &&
-                    email_authentication === 0 && (
-                      <div className="auth_form">
-                        <div className="auth_in_cont">
-                          <label htmlFor="email" className="auth_label">
-                            {t("loginWithMobile")}
-                          </label>
-                          <PhoneInput
-                            country={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
-                            value={number}
-                            onChange={(phone, data) =>
-                              handleInputChange(phone, data)
-                            }
-                            onCountryChange={(code) => setCountryCode(code)}
-                            inputProps={{
-                              name: "phone",
-                              required: true,
-                              autoFocus: true,
-                              ref: numberInputRef,
-                            }}
-                            enableLongNumbers
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={showLoader}
-                          className="verf_email_add_btn"
-                        >
-                          {showLoader ? (
-                            <div className="loader-container-otp">
-                              <div className="loader-otp"></div>
-                            </div>
-                          ) : (
-                            t("continue")
-                          )}
-                        </button>
-                      </div>
-                    )}
+                        ) : (
+                          t("continue")
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </form>
             )}
@@ -1657,18 +1631,12 @@ const LoginModal = ({
             {(mobile_authentication === 1 && email_authentication === 1) && (
               <div className="continueMethodCont">
                 {IsLoginWithEmail ? (
-                  <button
-                    className="reg_with_google_btn"
-                    onClick={() => setIsLoginWithEmail(false)}
-                  >
+                  <button className="reg_with_google_btn" onClick={() => setIsLoginWithEmail(false)}>
                     <MdOutlineLocalPhone size={24} />
                     {t("continueWithMobile")}
                   </button>
                 ) : (
-                  <button
-                    className="reg_with_google_btn"
-                    onClick={() => setIsLoginWithEmail(true)}
-                  >
+                  <button className="reg_with_google_btn" onClick={() => setIsLoginWithEmail(true)}>
                     <MdOutlineEmail size={24} />
                     {t("continueWithEmail")}
                   </button>
@@ -1678,19 +1646,11 @@ const LoginModal = ({
 
             <div className="auth_modal_footer">
               {t("agreeSignIn")} {settings?.company_name} <br />
-              <Link
-                href="/terms-and-condition"
-                className="link_brand_name"
-                onClick={OnHide}
-              >
+              <Link href="/terms-and-condition" className="link_brand_name" onClick={OnHide}>
                 {t("termsService")}
               </Link>{" "}
               {t("and")}{" "}
-              <Link
-                href="/privacy-policy"
-                className="link_brand_name"
-                onClick={OnHide}
-              >
+              <Link href="/privacy-policy" className="link_brand_name" onClick={OnHide}>
                 {t("privacyPolicy")}
               </Link>
             </div>
@@ -1703,10 +1663,7 @@ const LoginModal = ({
               <h1 className="reg_modal_title">{t("verifyOtp")}</h1>
               <p className="signin_redirect">
                 {t("sentTo")} {`+${number}`}{" "}
-                <span
-                  className="main_signin_redirect"
-                  onClick={handleShowLoginPassword}
-                >
+                <span className="main_signin_redirect" onClick={handleShowLoginPassword}>
                   {t("change")}
                 </span>
               </p>
@@ -1728,12 +1685,7 @@ const LoginModal = ({
                   ref={otpInputRef}
                 />
               </div>
-              <button
-                type="submit"
-                disabled={showLoader}
-                className="verf_email_add_btn"
-                onClick={verifyOTP}
-              >
+              <button type="submit" disabled={showLoader} className="verf_email_add_btn" onClick={verifyOTP}>
                 {showLoader ? (
                   <div className="loader-container-otp">
                     <div className="loader-otp"></div>
@@ -1769,7 +1721,6 @@ const LoginModal = ({
 };
 
 export default LoginModal;
-
 
 // LAST LIVE CODE RUNNIG 
 // import { Modal } from "antd";

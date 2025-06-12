@@ -12,6 +12,8 @@
   "continue": "Continue",
   "orSignInWith": "or sign in with",
   "google": "Continue with Google",
+  "numberNotFoundPleaseRegister":"please register yourself",
+  "failedToCheckNumber":"Failed to check number existence",
   "continueWithEmail": "Continue with Email",
   "continueWithMobile": "Continue with Mobile",
   "agreeSignIn": "By signing in to your account you agree to",
