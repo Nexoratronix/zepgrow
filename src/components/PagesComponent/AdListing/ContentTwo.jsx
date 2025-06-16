@@ -36,21 +36,33 @@ const ContentTwo = ({ AdListingDetails, handleAdListingChange, handleDetailsSubm
 
                     <div className="col-12">
                         <label className='auth_label' htmlFor="discounted_price">{t('discountedPrice')}</label>
-                        <input 
-                            placeholder={placeholderLabel} 
-                            value={AdListingDetails.discounted_price} 
-                            name='discounted_price' 
-                            className={`${AdListingDetails.discounted_price !== '' ? 'bg' : ''}`} 
+                        <input
+                            placeholder={placeholderLabel}
+                            value={AdListingDetails.discounted_price}
+                            name='discounted_price'
+                            className={`${AdListingDetails.discounted_price !== '' ? 'bg' : ''}`}
                             type='number'
-                            min="0" 
+                            min="0"
                             max={AdListingDetails.price || undefined}
-                            onChange={handleAdListingChange} 
+                            onChange={handleAdListingChange}
                         />
                     </div>
 
                     <div className="col-12">
                         <label className='auth_label' htmlFor="number">{t('phoneNumber')}</label>
-                        <input type="number" placeholder={t('enterPhoneNumber')} pattern='[0-9]{10}' min={0} name='phonenumber' value={AdListingDetails.phonenumber} onChange={handleAdListingChange} className={`${AdListingDetails.phonenumber !== '' ? 'bg' : ''}`} required onKeyPress={(e) => inpNum(e)} />
+                        <input
+                            type="number"
+                            placeholder={t('enterPhoneNumber')}
+                            pattern='[0-9]{10}'
+                            min={0}
+                            name='phonenumber'
+                            value={AdListingDetails.phonenumber}
+                            onChange={handleAdListingChange}
+                            className={`${AdListingDetails.phonenumber !== '' ? 'bg' : ''}`}
+                            required
+                            readOnly
+                            disabled
+                            onKeyPress={(e) => inpNum(e)} />
                     </div>
 
 

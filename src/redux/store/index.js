@@ -12,7 +12,7 @@ import offerReducer from '../reuducer/offerSlice';
 import searchReducer from "../reuducer/searchSlice"
 import globalStateReducer from '../reuducer/globalStateSlice';
 import filterReducer from '../reuducer/filterSlice'
-
+import authReducer from '../reuducer/authSlice';
 const persistConfig = {
   key: 'root',
   storage,
@@ -31,7 +31,8 @@ const rootReducer = combineReducers({
   OfferData: offerReducer,
   Search: searchReducer,
   GlobalState: globalStateReducer,
-  Filter: filterReducer
+  Filter: filterReducer,
+  UserSignup: authReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

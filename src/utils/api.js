@@ -59,8 +59,16 @@ export const ADD_REPORT_REVIEW = 'add-review-report'
 export const SET_ITEM_TOTAL_CLICK = 'set-item-total-click'
 export const GET_OTP = 'get-otp'
 export const VERIFY_OTP = 'verify-otp'
+export const GET_PROFILE = 'get-profile';
 
 
+
+
+export const getProfileApi = {
+  getProfile: () => {
+    return Api.get(GET_PROFILE); 
+  },
+};
 
 
 // 1. SETTINGS API
@@ -340,6 +348,8 @@ export const sendVerificationReqApi = {
         });
     },
 }
+
+
 export const updateProfileApi = {
     updateProfile: ({ name, email, mobile, fcm_id, address, profile, notification, show_personal_details } = {}) => {
         const formData = new FormData();
@@ -366,6 +376,8 @@ export const updateProfileApi = {
         });
     },
 }
+
+
 export const updateBankTransferApi = {
     updateBankTransfer: ({ payment_transection_id, payment_receipt} = {}) => {
         const formData = new FormData();
@@ -428,8 +440,7 @@ export const getOtpApi = {
     }
 }
 
-
-
+ 
 export const setItemTotalClickApi = {
     setItemTotalClick: ({ item_id } = {}) => {
         const formData = new FormData();

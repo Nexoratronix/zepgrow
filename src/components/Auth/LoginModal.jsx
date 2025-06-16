@@ -1636,6 +1636,7 @@ const LoginModal = ({
                     {t("continueWithMobile")}
                   </button>
                 ) : (
+                  // <></>
                   <button className="reg_with_google_btn" onClick={() => setIsLoginWithEmail(true)}>
                     <MdOutlineEmail size={24} />
                     {t("continueWithEmail")}
