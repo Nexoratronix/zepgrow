@@ -348,7 +348,6 @@
 
 
 
-
 "use client";
 import ProfileSidebar from "@/components/Profile/ProfileSidebar";
 import Image from "next/image";
@@ -572,7 +571,7 @@ const EditProfile = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.success("Profile Updated Successfully");
+      toast.success("Profile updated successfully");
     } finally {
       setIsLoading(false);
     }
